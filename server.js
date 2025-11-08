@@ -1,56 +1,46 @@
-const express = require("express");
-const fetch = require("node-fetch");
-const bodyParser = require("body-parser");
+import express from "express";
+import bodyParser from "body-parser";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
 
-// ✅ OpenAI API key yahan daalo (apni key)
-const OPENAI_API_KEY = "AIzaSyA8ht9e462uMNiRdKLNzvrEpRt6DeUr9QM";
-
-// Home route
 app.get("/", (req, res) => {
-  res.send("✅ SmartHomeworkAI Server is running fine!");
+  res.send("✅ Gemini AI Homework Solver is Running...");
 });
 
-// Main AI route
-app.post("/solve", async (req, res) => {
-  const { question } = req.body;
-
-  if (!question) {
-    return res.status(400).json({ error: "Question not provided" });
-  }
+app.post("/api", async (req, res) => {
+  const question = req.body.question;
+  if (!question) return res.status(400).json({ error: "Question required!" });
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: "You are a homework solver that explains answers clearly for all subjects." },
-          { role: "user", content: question }
-        ],
-      }),
-    });
+    const apiKey = process.env.GOOGLE_API_KEY;" AIzaSyA8ht9e462uMNiRdKLNzvrEpRt6DeUr9QM"
+
+"
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: question }] }],
+        }),
+      }
+    );
 
     const data = await response.json();
+    const answer =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No response from Gemini AI.";
 
-    if (data.choices && data.choices.length > 0) {
-      res.json({ answer: data.choices[0].message.content });
-    } else {
-      res.json({ error: "No response from AI" });
-    }
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error, try again later." });
+    res.json({ answer });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Server Error" });
   }
 });
 
-// Server start
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
